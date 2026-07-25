@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.qiyangdev.minimal-expo-starter"
+      "bundleIdentifier": "dev.qiyang.minimal-expo-starter"
     },
     "android": {
       "package": "com.qiyangdev.minimalexpostarter",
@@ -34,7 +34,25 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "usePrecompiledModules": false
+          }
+        }
+      ],
+      [
+        "llama.rn",
+        {
+          "enableEntitlements": true,
+          "entitlementsProfile": "production",
+          "forceCxx20": true,
+          "enableOpenCLAndHexagon": true
+        }
+      ],
+      ["@react-native-ai/mlc", {}]
     ],
     "experiments": {
       "typedRoutes": true,

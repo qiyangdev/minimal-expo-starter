@@ -5,7 +5,7 @@ export default function HomeLayout() {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{ headerLargeTitleEnabled: true, title: "Home" }}
+        options={{ headerLargeTitleEnabled: true, title: "On-device AI" }}
       />
     </Stack>
   );
