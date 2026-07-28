@@ -2,6 +2,11 @@
 
 A personal Expo SDK 57 starter for native iOS and Android apps.
 
+<p align="center">
+  <img src="docs/media/screenshot-tab-1.png" alt="Home tab" width="320" />
+  <img src="docs/media/screenshot-tab-2.png" alt="Settings tab" width="320" />
+</p>
+
 ## Included
 
 - Expo Router with native tabs

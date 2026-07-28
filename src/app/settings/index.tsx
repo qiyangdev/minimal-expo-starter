@@ -3,7 +3,7 @@ import { useState } from "react";
 
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
-  const [analytics, setAnalytics] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(false);
 
   return (
     <Host style={{ flex: 1 }}>
@@ -16,8 +16,8 @@ export default function SettingsScreen() {
           />
           <Switch
             label="Email"
-            value={analytics}
-            onValueChange={setAnalytics}
+            value={emailNotifications}
+            onValueChange={setEmailNotifications}
           />
         </FieldGroup.Section>
 
