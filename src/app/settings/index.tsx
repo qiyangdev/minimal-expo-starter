@@ -1,4 +1,5 @@
 import { FieldGroup, Host, Switch, Text } from "@expo/ui";
+import { scrollEdgeEffectStyle } from "@expo/ui/swift-ui/modifiers";
 import { useState } from "react";
 
 export default function SettingsScreen() {
@@ -7,7 +8,7 @@ export default function SettingsScreen() {
 
   return (
     <Host style={{ flex: 1 }}>
-      <FieldGroup>
+      <FieldGroup modifiers={[scrollEdgeEffectStyle("soft")]}>
         <FieldGroup.Section title="Notifications">
           <Switch
             label="Push"

@@ -3,7 +3,10 @@
     "name": "minimal-expo-starter",
     "slug": "minimal-expo-starter",
     "version": "1.0.0",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "minimalexpostarter",
@@ -31,7 +34,8 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

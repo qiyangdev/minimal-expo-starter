@@ -1,11 +1,12 @@
-import { Host, List, ListItem } from "@expo/ui";
+import { FieldGroup, Host, ListItem } from "@expo/ui";
+import { scrollEdgeEffectStyle } from "@expo/ui/swift-ui/modifiers";
 
 export default function HomeScreen() {
   return (
     <Host style={{ flex: 1 }}>
-      <List>
+      <FieldGroup modifiers={[scrollEdgeEffectStyle("soft")]}>
         <ListItem>Hello, World!</ListItem>
-      </List>
+      </FieldGroup>
     </Host>
   );
 }
