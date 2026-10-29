@@ -53,6 +53,8 @@ bun run typecheck
 bun run check
 ```
 
+The type check regenerates Expo Router types first, so newly pulled routes are included without starting the development server.
+
 ## Routes
 
 ```text
