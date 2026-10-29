@@ -55,6 +55,8 @@ bun run check
 
 The type check regenerates Expo Router types first, so newly pulled routes are included without starting the development server.
 
+GitHub Actions runs `bun install --frozen-lockfile` and `bun run check` on every push and pull request, using Node.js 24 and Bun 1.3.14.
+
 ## Routes
 
 ```text
