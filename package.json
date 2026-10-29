@@ -3,7 +3,6 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/material-symbols": "^0.1.1",
     "@expo/ui": "~58.0.24",
     "expo": "^58.0.0",
     "expo-constants": "~58.0.13",
