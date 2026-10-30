@@ -2,9 +2,22 @@
 
 A personal Expo SDK 58 starter for native iOS and Android apps.
 
+## Screenshots
+
+### iOS
+
 <p align="center">
-  <img src="docs/media/screenshot-tab-1.png" alt="Home tab" width="320" />
-  <img src="docs/media/screenshot-tab-2.png" alt="Settings tab" width="320" />
+  <img src="docs/media/ios-screenshot-tab-1.png" alt="Home tab on iOS" width="320" />
+  <img src="docs/media/ios-screenshot-tab-2.png" alt="Settings tab on iOS" width="320" />
+</p>
+
+### Android
+
+Verified on the Android emulator.
+
+<p align="center">
+  <img src="docs/media/android-screenshot-tab-1.png" alt="Home tab on Android" width="320" />
+  <img src="docs/media/android-screenshot-tab-2.png" alt="Settings tab on Android" width="320" />
 </p>
 
 ## Included

@@ -7,6 +7,15 @@ export default function HomeLayout() {
         name="index"
         options={{ headerLargeTitleEnabled: true, title: "Home" }}
       />
+      <Stack.Screen
+        name="add"
+        options={{
+          title: "Add",
+          presentation: "formSheet",
+          sheetAllowedDetents: [1],
+          sheetGrabberVisible: true,
+        }}
+      />
     </Stack>
   );
 }
