@@ -1,9 +1,43 @@
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router";
 import { NativeTabs } from "expo-router/native-tabs";
-import { useColorScheme } from "react-native";
+import { useEffect } from "react";
+import { Platform, useColorScheme } from "react-native";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (!__DEV__ || Platform.OS !== "ios") return;
+    const register = async () => {
+      try {
+        let permission = await Notifications.getPermissionsAsync();
+        if (!permission.granted && permission.canAskAgain) {
+          permission = await Notifications.requestPermissionsAsync();
+        }
+        if (!permission.granted) return;
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        if (!projectId) throw new Error("Missing EAS project ID");
+        const token = await Notifications.getExpoPushTokenAsync({ projectId });
+        console.log("Expo push token:", token.data);
+      } catch (error) {
+        console.warn("Push registration failed:", error);
+      }
+    };
+    void register();
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

@@ -69,6 +69,16 @@ The type check regenerates Expo Router types first, so newly pulled routes are i
 
 GitHub Actions runs `bun install --frozen-lockfile` and `bun run check` on every push and pull request, using Node.js 24 and Bun 1.3.14.
 
+## iOS push notifications
+
+In development, the iOS app requests notification permission and logs its Expo push token to the development console. Keep the token private; it is not logged in production builds.
+
+1. Link your copy of the app to an Expo project with `eas init`, and use your own iOS bundle identifier.
+2. Configure Apple signing and an APNs authentication key for the project using `eas credentials`, then create and install an iOS development build with those credentials. Rebuild after changing native configuration.
+3. Run the development build, allow notifications, and copy the token from the development console. Run `bun run test:push` and paste the token at the prompt to send a test notification. The script prints the Expo ticket ID, not a delivery confirmation.
+
+Push registration requires a network connection and valid credentials. The app does not yet upload tokens to a backend or handle notification taps. See the [Expo push setup guide](https://docs.expo.dev/push-notifications/push-notifications-setup/) for platform requirements and credential setup.
+
 ## Routes
 
 ```text
