@@ -25,6 +25,7 @@ Verified on the Android emulator.
 - Expo Router with native tabs
 - Independent stacks for Home and Settings
 - Navigation theme follows the system color scheme
+- Home map using Apple Maps on iOS 17+ and Google Maps on Android
 - Large navigation titles on iOS
 - Universal `@expo/ui` components backed by SwiftUI and Jetpack Compose
 - Strict TypeScript, typed routes, React Compiler, and ESLint
@@ -56,6 +57,35 @@ Build and run a native app:
 bun run ios
 bun run android
 ```
+
+## Maps
+
+Home displays a native map centered on Shanghai, with the navigation header
+hidden. Native map controls are enabled: compass, location, scale, and pitch on
+iOS; compass, location, zoom, indoor floor picker, and map toolbar on Android.
+Some controls appear only when rotating, zooming, selecting a marker, or viewing
+a supported indoor building. Home requests foreground location permission on
+first use; the user location layer is enabled only after permission is granted.
+Rebuild the native app after changing the location permission configuration.
+
+Apple Maps requires iOS 17 or later and needs no API key. Expo Maps includes
+native code, so rebuild the app after installing it; Expo Go is not supported.
+
+For Android:
+
+1. Enable **Maps SDK for Android** in your Google Cloud project.
+2. Create an API key restricted to your Android package name (currently
+   `com.qiyangdev.minimalexpostarter`) and signing certificate SHA-1.
+3. Copy `.env.example` to `.env.local` and set `GOOGLE_MAPS_API_KEY`.
+4. Run `bun run android` to rebuild the app.
+
+`app.config.ts` passes the key to `android.config.googleMaps.apiKey`. Set the same
+environment variable in your build environment when building remotely. Rebuild
+the native app whenever the key changes. Without a configured key, Android shows
+an unavailable message instead of mounting Google Maps.
+
+See the [Expo SDK 58 Maps documentation](https://docs.expo.dev/versions/v58.0.0/sdk/maps/)
+for Google Cloud setup details.
 
 ## Quality checks
 

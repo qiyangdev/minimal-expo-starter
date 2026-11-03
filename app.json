@@ -35,7 +35,14 @@
           "imageWidth": 76
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow $(PRODUCT_NAME) to show your location on the map."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
