@@ -96,6 +96,29 @@ After copying this starter, update:
 
 Then remove or replace the example Home and Settings content.
 
+## Maps demo
+
+The `with-expo-maps` branch replaces the Home content with a native map centered
+on Shanghai, using Apple Maps on iOS 17+ and Google Maps on Android. The Home
+navigation header is hidden, native map controls are enabled, and foreground
+location permission is requested to show the user's location.
+
+To explore the demo on iOS:
+
+```bash
+git switch with-expo-maps
+bun install --frozen-lockfile
+bun run ios
+```
+
+For Android, enable **Maps SDK for Android** in Google Cloud, create an API key
+restricted to your Android package name and signing certificate SHA-1, then copy
+`.env.example` to `.env.local` on the demo branch and set `GOOGLE_MAPS_API_KEY`.
+Build and run with `bun run android`.
+
+Expo Maps requires a native build; Expo Go is not supported. See the demo
+branch's README for configuration details.
+
 ## iPhone Duo demo
 
 The `iphone-duo-demo` branch contains the Features tab, ArrangementView split-layout demo for iOS 27.1 and later, platform fallback, and iPhone Duo screenshots.
