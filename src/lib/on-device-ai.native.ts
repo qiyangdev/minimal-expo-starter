@@ -1,8 +1,10 @@
 import { polyfillsReady } from "@/polyfills";
+import type { ModelMessage } from "ai";
 import { isDevice } from "expo-device";
 import { Platform } from "react-native";
 
 import {
+  llamaModel,
   type OnDeviceAIGenerationOptions,
   type OnDeviceAIProgress,
   type OnDeviceAIRuntime,
@@ -18,8 +20,6 @@ export {
   type OnDeviceAIStatus,
 } from "./on-device-ai.types";
 
-const LLAMA_MODEL_ID =
-  "bartowski/Llama-3.2-1B-Instruct-GGUF/Llama-3.2-1B-Instruct-Q4_K_M.gguf";
 const MLC_MODEL_ID =
   Platform.OS === "ios"
     ? "Qwen2.5-0.5B-Instruct"
@@ -43,6 +43,13 @@ async function loadAppleProvider() {
 async function loadLlamaProvider() {
   await polyfillsReady;
   return import("@react-native-ai/llama");
+}
+
+async function getLlamaFileSize(path: string): Promise<number | null> {
+  const { default: blobUtil } = await import("react-native-blob-util");
+  return (await blobUtil.fs.exists(path))
+    ? Number((await blobUtil.fs.stat(path)).size)
+    : null;
 }
 
 async function loadMlcProvider() {
@@ -109,26 +116,36 @@ async function getLlamaStatus(): Promise<OnDeviceAIStatus> {
     return {
       ready: true,
       canPrepare: false,
-      label: "Llama model ready",
+      label: `${llamaModel.name} ready`,
       description:
-        "Llama 3.2 1B Instruct is loaded through llama.cpp and ready to generate.",
+        "Loaded through llama.cpp and ready to generate.",
     };
   }
 
   try {
-    const { isModelDownloaded } = await loadLlamaProvider();
-    const downloaded = await isModelDownloaded(LLAMA_MODEL_ID);
+    const { getModelPath } = await loadLlamaProvider();
+    const size = await getLlamaFileSize(getModelPath(llamaModel.id));
+    const downloaded = size === llamaModel.sizeBytes;
+    const incomplete = size !== null && !downloaded;
 
     return {
       ready: false,
       canPrepare: true,
       actionLabel: downloaded
-        ? "Load Llama model"
-        : "Download Llama model · 808 MB",
-      label: downloaded ? "Llama model downloaded" : "Llama download required",
+        ? `Load ${llamaModel.name}`
+        : incomplete
+          ? `Download again · ${llamaModel.downloadSize}`
+          : `Download ${llamaModel.name} · ${llamaModel.downloadSize}`,
+      label: downloaded
+        ? `${llamaModel.name} downloaded`
+        : incomplete
+          ? `${llamaModel.name} download incomplete`
+          : `${llamaModel.name} download required`,
       description: downloaded
         ? "The GGUF model is stored on this device. Load it into memory to continue."
-        : "Downloads Llama 3.2 1B Instruct once, then runs it fully on-device.",
+        : incomplete
+          ? "The cached GGUF file has the wrong size. Download it again before loading."
+          : "Download the GGUF model once to run it fully on-device.",
     };
   } catch {
     return {
@@ -200,37 +217,41 @@ async function prepareLlama(
     return;
   }
 
-  const { downloadModel, isModelDownloaded, llama, removeModel } =
+  const { downloadModel, getModelPath, llama, removeModel } =
     await loadLlamaProvider();
-  let modelPath: string;
+  const modelPath = getModelPath(llamaModel.id);
+  const size = await getLlamaFileSize(modelPath);
 
-  if (await isModelDownloaded(LLAMA_MODEL_ID)) {
-    const { getModelPath } = await loadLlamaProvider();
-    modelPath = getModelPath(LLAMA_MODEL_ID);
-  } else {
+  if (size !== llamaModel.sizeBytes) {
+    if (size !== null) {
+      await removeModel(llamaModel.id);
+    }
     onProgress?.({
       phase: "downloading",
-      label: "Downloading Llama 3.2 1B Instruct…",
+      label: `Downloading ${llamaModel.name}…`,
       percentage: 0,
     });
 
     try {
-      modelPath = await downloadModel(LLAMA_MODEL_ID, ({ percentage }) => {
+      await downloadModel(llamaModel.id, ({ percentage }) => {
         onProgress?.({
           phase: "downloading",
-          label: "Downloading Llama 3.2 1B Instruct…",
+          label: `Downloading ${llamaModel.name}…`,
           percentage: Number.isFinite(percentage) ? percentage : undefined,
         });
       });
+      if ((await getLlamaFileSize(modelPath)) !== llamaModel.sizeBytes) {
+        throw new Error(`${llamaModel.name} download was incomplete. Try downloading it again.`);
+      }
     } catch (error) {
-      await removeModel(LLAMA_MODEL_ID).catch(() => undefined);
+      await removeModel(llamaModel.id).catch(() => undefined);
       throw error;
     }
   }
 
   onProgress?.({
     phase: "preparing",
-    label: "Loading Llama into memory…",
+    label: `Loading ${llamaModel.name} into memory…`,
   });
   const model = llama.languageModel(modelPath, {
     contextParams: { n_ctx: 2048, n_gpu_layers: 99 },
@@ -302,7 +323,7 @@ export async function prepareOnDeviceAIRuntime(
 
 async function streamFromModel(
   model: Parameters<(typeof import("ai"))["streamText"]>[0]["model"],
-  prompt: string,
+  messages: ModelMessage[],
   options: OnDeviceAIGenerationOptions,
   onDelta?: (text: string) => void,
 ): Promise<string> {
@@ -311,22 +332,27 @@ async function streamFromModel(
     model,
     system:
       "You are a concise, helpful assistant running privately on the user's device.",
-    prompt,
+    messages,
     maxOutputTokens: options.maxOutputTokens,
     temperature: options.temperature,
   });
 
   let text = "";
-  for await (const delta of result.textStream) {
-    text += delta;
-    onDelta?.(text);
+  for await (const part of result.fullStream) {
+    if (part.type === "error") {
+      throw part.error;
+    }
+    if (part.type === "text-delta") {
+      text += part.text;
+      onDelta?.(text);
+    }
   }
   return text;
 }
 
 export async function generateOnDeviceText(
   runtime: OnDeviceAIRuntime,
-  prompt: string,
+  messages: ModelMessage[],
   options: OnDeviceAIGenerationOptions,
   onDelta?: (text: string) => void,
 ): Promise<string> {
@@ -337,20 +363,20 @@ export async function generateOnDeviceText(
         "Apple Foundation Models are unavailable. Check device support and Apple Intelligence settings.",
       );
     }
-    return streamFromModel(apple(), prompt, options, onDelta);
+    return streamFromModel(apple(), messages, options, onDelta);
   }
 
   if (runtime === "llama") {
     if (!preparedLlamaModel) {
-      throw new Error("Download and load the Llama model first.");
+      throw new Error(`Download and load ${llamaModel.name} first.`);
     }
-    return streamFromModel(preparedLlamaModel, prompt, options, onDelta);
+    return streamFromModel(preparedLlamaModel, messages, options, onDelta);
   }
 
   if (!preparedMlcModel) {
     throw new Error("Download and load the MLC model first.");
   }
-  return streamFromModel(preparedMlcModel, prompt, options, onDelta);
+  return streamFromModel(preparedMlcModel, messages, options, onDelta);
 }
 
 export async function unloadOnDeviceAIRuntime(

@@ -25,6 +25,13 @@ export type OnDeviceAIGenerationOptions = {
   temperature: number;
 };
 
+export const llamaModel = {
+  id: "ggml-org/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf",
+  name: "Qwen3.5-4B",
+  downloadSize: "3.03 GB",
+  sizeBytes: 3_032_091_584,
+};
+
 export const onDeviceAIRuntimes: OnDeviceAIRuntimeOption[] = [
   {
     id: "apple",
@@ -34,7 +41,7 @@ export const onDeviceAIRuntimes: OnDeviceAIRuntimeOption[] = [
   {
     id: "llama",
     label: "Llama",
-    detail: "Llama 3.2 1B · GGUF · about 808 MB",
+    detail: `${llamaModel.name} · Q4_K_M GGUF · ${llamaModel.downloadSize}`,
   },
   {
     id: "mlc",

@@ -1,6 +1,6 @@
 # Minimal Expo Starter
 
-A personal Expo SDK 57 starter for native iOS and Android apps.
+A personal Expo SDK 58 starter for native iOS and Android apps.
 
 ## Demo
 
@@ -11,16 +11,16 @@ selection, and local model status on a real device.
 
 ## Included
 
-- Expo Router with native tabs
-- Independent stacks for Home and Settings
-- Large navigation titles on iOS
+- On-device chat with a bottom composer and streaming responses
+- Native Settings sheet for model management and generation controls
+- Navigation theme follows the system color scheme
 - Universal `@expo/ui` components backed by SwiftUI and Jetpack Compose
 - On-device text generation with React Native AI, Llama, and MLC
 - Strict TypeScript, typed routes, React Compiler, and ESLint
 
 ## Requirements
 
-- Node.js 22.13 or newer
+- Node.js 22.13+, 24.3+, or 26+ (odd-numbered releases are unsupported)
 - Bun
 - Xcode for iOS development
 - Android Studio for Android development
@@ -54,14 +54,15 @@ behind one AI SDK v6 streaming interface:
 
 - **Apple** — Foundation Models, available immediately on supported iOS 26
   devices.
-- **Llama** — Llama 3.2 1B Instruct through `llama.rn` and llama.cpp. The
-  selected Q4 GGUF download is about 808 MB.
+- **Llama (default)** — Qwen3.5-4B through `llama.rn` and llama.cpp. The
+  Q4_K_M GGUF download is about 3.03 GB.
 - **MLC** — compiled Qwen models through MLC Engine. The selected model
   starts around 600 MB; the bundled model list differs between iOS and Android.
 
-Llama and MLC download and load automatically when the user selects the
-runtime in Settings. Existing files are reused, and switching runtime unloads
-the previous model from memory. Prompts and generated text remain on-device.
+Open Settings from the chat toolbar, choose a runtime, and use its model button
+to download or load the model. Switching runtimes checks the local files and
+unloads the previous model from memory. The conversation stays in memory and is
+sent as context to the selected on-device model.
 
 Use a physical device and a native development build (`bun run ios` or
 `bun run android`). These providers are not available in Expo Go, and the
@@ -75,21 +76,21 @@ bun run typecheck
 bun run check
 ```
 
+The type check generates Expo Router types before running TypeScript. GitHub
+Actions checks the locked dependencies and runs lint and type checking on pushes
+and pull requests.
+
 ## Routes
 
 ```text
 src/app/
 ├── _layout.tsx
-├── (home)/
-│   ├── _layout.tsx
-│   └── index.tsx
-└── settings/
-    ├── _layout.tsx
-    └── index.tsx
+├── index.tsx
+└── settings.tsx
 ```
 
-- `/` — Home
-- `/settings` — Settings
+- `/` — Chat
+- `/settings` — Settings sheet
 
 ## Create a new app
 

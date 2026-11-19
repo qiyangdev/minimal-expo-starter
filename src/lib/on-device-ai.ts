@@ -1,3 +1,4 @@
+import type { ModelMessage } from "ai";
 import {
   type OnDeviceAIGenerationOptions,
   type OnDeviceAIProgress,
@@ -28,7 +29,7 @@ export async function prepareOnDeviceAIRuntime(
 
 export async function generateOnDeviceText(
   _runtime: OnDeviceAIRuntime,
-  _prompt: string,
+  _messages: ModelMessage[],
   _options: OnDeviceAIGenerationOptions,
   _onDelta?: (text: string) => void,
 ): Promise<string> {

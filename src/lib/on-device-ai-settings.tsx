@@ -9,11 +9,15 @@ import {
   type OnDeviceAIRuntime,
   type OnDeviceAIStatus,
 } from "@/lib/on-device-ai";
+import type { ModelMessage } from "ai";
 import {
   createContext,
+  type Dispatch,
   type PropsWithChildren,
+  type SetStateAction,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -23,11 +27,12 @@ const checkingStatus: OnDeviceAIStatus = {
   label: "Checking model…",
   description: "Looking for an available on-device runtime.",
 };
-const defaultRuntime: OnDeviceAIRuntime = "apple";
+const defaultRuntime: OnDeviceAIRuntime = "llama";
 
 type OnDeviceAISettings = {
   runtime: OnDeviceAIRuntime;
-  runtimeLabel: string;
+  generationOptions: OnDeviceAIGenerationOptions;
+  setGenerationOptions: Dispatch<SetStateAction<OnDeviceAIGenerationOptions>>;
   status: OnDeviceAIStatus;
   error: string;
   isGenerating: boolean;
@@ -36,8 +41,7 @@ type OnDeviceAISettings = {
   selectRuntime: (runtime: OnDeviceAIRuntime) => Promise<void>;
   prepareRuntime: () => Promise<void>;
   generate: (
-    prompt: string,
-    options: OnDeviceAIGenerationOptions,
+    messages: ModelMessage[],
     onDelta?: (text: string) => void,
   ) => Promise<string>;
 };
@@ -56,13 +60,21 @@ export function OnDeviceAISettingsProvider({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [progress, setProgress] = useState<OnDeviceAIProgress | null>(null);
+  const [generationOptions, setGenerationOptions] =
+    useState<OnDeviceAIGenerationOptions>({
+      maxOutputTokens: 256,
+      temperature: 0.7,
+    });
+  const operationInFlight = useRef(false);
 
   useEffect(() => {
     let active = true;
 
     getOnDeviceAIStatus(defaultRuntime).then((nextStatus) => {
       if (active) {
-        setStatus(nextStatus);
+        setStatus((current) =>
+          current === checkingStatus ? nextStatus : current,
+        );
       }
     });
 
@@ -72,9 +84,10 @@ export function OnDeviceAISettingsProvider({
   }, []);
 
   async function selectRuntime(nextRuntime: OnDeviceAIRuntime) {
-    if (nextRuntime === runtime || isGenerating || isPreparing) {
+    if (nextRuntime === runtime || operationInFlight.current) {
       return;
     }
+    operationInFlight.current = true;
 
     const nextRuntimeLabel =
       onDeviceAIRuntimes.find((option) => option.id === nextRuntime)?.label ??
@@ -83,9 +96,8 @@ export function OnDeviceAISettingsProvider({
     setStatus({
       ready: false,
       canPrepare: false,
-      label: `Loading ${nextRuntimeLabel}…`,
-      description:
-        "Checking local files and preparing the selected runtime.",
+      label: `Checking ${nextRuntimeLabel}…`,
+      description: "Checking runtime availability and local model files.",
     });
     setError("");
     setProgress(null);
@@ -103,28 +115,26 @@ export function OnDeviceAISettingsProvider({
         );
       }
 
-      const nextStatus = await prepareOnDeviceAIRuntime(
-        nextRuntime,
-        setProgress,
-      );
-      setStatus(nextStatus);
-      setProgress(null);
+      setStatus(await getOnDeviceAIStatus(nextRuntime));
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "The selected local model could not be loaded.",
+          : "The selected runtime could not be checked.",
       );
       setStatus(await getOnDeviceAIStatus(nextRuntime));
     } finally {
+      operationInFlight.current = false;
+      setProgress(null);
       setIsPreparing(false);
     }
   }
 
   async function prepareRuntime() {
-    if (!status.canPrepare || isPreparing || isGenerating) {
+    if (!status.canPrepare || operationInFlight.current) {
       return;
     }
+    operationInFlight.current = true;
 
     setError("");
     setProgress(null);
@@ -133,7 +143,6 @@ export function OnDeviceAISettingsProvider({
     try {
       const nextStatus = await prepareOnDeviceAIRuntime(runtime, setProgress);
       setStatus(nextStatus);
-      setProgress(null);
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -142,37 +151,42 @@ export function OnDeviceAISettingsProvider({
       );
       setStatus(await getOnDeviceAIStatus(runtime));
     } finally {
+      operationInFlight.current = false;
+      setProgress(null);
       setIsPreparing(false);
     }
   }
 
   async function generate(
-    prompt: string,
-    options: OnDeviceAIGenerationOptions,
+    messages: ModelMessage[],
     onDelta?: (text: string) => void,
   ) {
-    if (isGenerating || isPreparing) {
-      return "";
+    if (!status.ready || operationInFlight.current) {
+      throw new Error("The local model is not ready to send a message.");
     }
 
+    operationInFlight.current = true;
     setIsGenerating(true);
 
     try {
-      return await generateOnDeviceText(runtime, prompt, options, onDelta);
+      return await generateOnDeviceText(
+        runtime,
+        messages,
+        generationOptions,
+        onDelta,
+      );
     } finally {
+      operationInFlight.current = false;
       setIsGenerating(false);
     }
   }
-
-  const runtimeLabel =
-    onDeviceAIRuntimes.find((option) => option.id === runtime)?.label ??
-    "Local";
 
   return (
     <OnDeviceAISettingsContext
       value={{
         runtime,
-        runtimeLabel,
+        generationOptions,
+        setGenerationOptions,
         status,
         error,
         isGenerating,
